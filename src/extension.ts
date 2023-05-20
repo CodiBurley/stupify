@@ -191,7 +191,7 @@ export default function HeatingCoolingCostsBar(props: Props) {
 
 function initializeOpenAI() {
   const configuration = new Configuration({
-    apiKey: "YOUR_API_KEY_HERE",
+    apiKey: process.env.OPENAI_API_KEY ?? "",
   });
   return new OpenAIApi(configuration);
 }

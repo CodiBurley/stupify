@@ -1,10 +1,9 @@
 //@ts-check
 
 'use strict';
-// const webpack = require('webpack');
-// require('dotenv').config({ path: './.env' }); 
 
 const path = require('path');
+const Dotenv = require('dotenv-webpack');
 
 //@ts-check
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
@@ -45,11 +44,9 @@ const extensionConfig = {
   devtool: 'nosources-source-map',
   infrastructureLogging: {
     level: "log", // enables logging required for problem matchers
-  }
-  // plugins: [
-  //   new webpack.DefinePlugin({
-  //     'process.env': JSON.stringify(process.env)
-  //   })
-  // ]
+  },
+  plugins: [
+    new Dotenv()
+  ]
 };
 module.exports = [ extensionConfig ];
