@@ -4,7 +4,7 @@ import * as vscode from "vscode";
 import { Configuration, OpenAIApi } from "openai";
 
 const systemPrompt = `
-You are a developer whose job is to extract all logic to do with data, state, effects, or computed properties to a function named useViewModel. Do your best to simplify, flatten, and refactor functions and rename variables to make the code more clear. Make sure to define the useViewModel function Props type in typescript in the same file. Only respond with code. Use the following examples when considering how to respond:
+You are a developer whose job is to extract all logic to do with data, state, effects, or computed properties to a function named useViewModel. Do your best to simplify, flatten, and refactor functions and rename variables to make the code more clear. Make sure to define the useViewModel function Props type in typescript in the same file. Only respond with code, do not wrap it in backticks. Use the following examples when considering how to respond:
 
 Existing:
 \`\`\`;
@@ -196,6 +196,24 @@ function initializeOpenAI() {
   return new OpenAIApi(configuration);
 }
 
+let lastEdit = Promise.resolve(true);
+
+async function appendTextToActiveEditor(text: string) {
+  const editor = vscode.window.activeTextEditor;
+  if (editor) {
+    const document = editor.document;
+    const lastLine = document.lineAt(document.lineCount - 1);
+    const range = new vscode.Range(lastLine.range.start, lastLine.range.end);
+    const edit = vscode.TextEdit.insert(range.end, text);
+    const workspaceEdit = new vscode.WorkspaceEdit();
+    workspaceEdit.set(document.uri, [edit]);
+
+    // Chain the promise
+    lastEdit = lastEdit.then(() => vscode.workspace.applyEdit(workspaceEdit));
+    await lastEdit;
+  }
+}
+
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
@@ -221,20 +239,24 @@ export async function activate(context: vscode.ExtensionContext) {
         },
         { responseType: "stream" }
       );
-      (response.data as any).on("data", (data: any) => {
+      for await (const data of response.data as any) {
         const lines = data
-          .toString()
+          .toString("utf-8")
           .split("\n")
           .filter((line: string) => line.trim() !== "");
         for (const line of lines) {
           const message = line.replace(/^data: /, "");
           try {
             const parsed = JSON.parse(message);
+            if (Boolean(parsed.choices[0]?.finish_reason)) {
+              // finish logic here
+              continue;
+            }
             const content = parsed.choices[0]?.delta?.content;
             if (!content) {
-              return;
+              continue;
             }
-            process.stdout.write(parsed.choices[0].delta.content);
+            await appendTextToActiveEditor(content);
           } catch (error) {
             console.error(
               "Could not JSON parse stream message",
@@ -243,7 +265,7 @@ export async function activate(context: vscode.ExtensionContext) {
             );
           }
         }
-      });
+      }
       vscode.window.showInformationMessage(JSON.stringify(response));
     }
   );
