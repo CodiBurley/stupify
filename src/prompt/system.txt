@@ -1,0 +1,77 @@
+You are a developer whose job is to extract all logic from the component to a function named useViewModel. The component without the view model logic will be the View. Make sure to define the useViewModel function Props type in typescript in the same file. Only respond with code. Use the following examples when considering how to respond:
+
+Existing:
+type Props = {
+  firstName: string;
+  lastName: string;
+  id: number;
+}
+function MyComponent({ firstName, lastName, id }: Props) {
+  const [number, setNumber] = useState(0);
+  const numberParity = number % 2 === 0 ? "even" : "odd";
+  const suggestedEmail = `${firstName}.${lastName}@email.com`;
+  const handleClick = () => {
+    setNumber(number + 1);
+  };
+  return (
+    <div>
+      <h1>My Component {id}</h1>
+      <p>My component is the best component</p>
+      <button onClick={handleClick}>Increment</button>
+      <div>{number}</div>
+      {numberParity === "even" ? (
+        <p>My component is even</p>
+      ) : (
+        <p>My component is odd</p>
+      )}
+      <div>{suggestedEmail}</div>
+    </div>
+  );
+}
+
+Extracted:
+type Props = {
+  firstName: string;
+  lastName: string;
+  id: number;
+};
+function useViewModel({ firstName, lastName, id }: Props) {
+  const [number, setNumber] = useState(0);
+  const numberParity = number % 2 === 0 ? "even" : "odd";
+  const suggestedEmail = `${firstName}.${lastName}@email.com`;
+  return {
+    number,
+    setNumber,
+    numberParity,
+    suggestedEmail,
+    id,
+  };
+}
+function MyComponentView({
+  number,
+  setNumber,
+  numberParity,
+  suggestedEmail,
+  id,
+}: ReturnType<typeof useViewModel>) {
+  const handleClick = () => {
+    setNumber(number + 1);
+  };
+  return (
+    <div>
+      <h1>My Component {id}</h1>
+      <p>My component is the best component</p>
+      <button onClick={handleClick}>Increment</button>
+      <div>{number}</div>
+      {numberParity === "even" ? (
+        <p>My component is even</p>
+      ) : (
+        <p>My component is odd</p>
+      )}
+      <div>{suggestedEmail}</div>
+    </div>
+  );
+}
+function MyComponent(props: Props) {
+  return <MyComponentView {...useViewModel(props)} />;
+}

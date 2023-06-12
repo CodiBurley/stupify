@@ -3,7 +3,7 @@
 'use strict';
 
 const path = require('path');
-const Dotenv = require('dotenv-webpack');
+const dotenv = require('dotenv-webpack');
 
 //@ts-check
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
@@ -38,6 +38,10 @@ const extensionConfig = {
             loader: 'ts-loader'
           }
         ]
+      },
+      {
+        test: /\.txt/,
+        type: 'asset/source',
       }
     ]
   },
@@ -46,7 +50,7 @@ const extensionConfig = {
     level: "log", // enables logging required for problem matchers
   },
   plugins: [
-    new Dotenv()
+    new dotenv()
   ]
 };
 module.exports = [ extensionConfig ];

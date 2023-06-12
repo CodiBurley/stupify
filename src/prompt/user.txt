@@ -1,0 +1,93 @@
+import { Bar, Flex, Grid, Text } from '../../../../components'
+import './styles.scss'
+import formatClasses from '../../../../utils/classes/formatClasses'
+import { RuntimeCost } from '../../../../types/thermostatCostHistory'
+
+export interface Props {
+  period: string
+  heat: RuntimeCost
+  cool: RuntimeCost
+  off: RuntimeCost
+}
+
+interface LegendItemProps {
+  label: string
+  subheading?: string
+}
+
+function LegendItem(props: LegendItemProps) {
+  return (
+    <Grid gap="6px" placeItems="baseline">
+      <span data-temperature-key={props.label.toLowerCase()} />
+      <Grid flow="row">
+        <Text>{props.label}</Text>
+        {props.subheading && <Text variant="body2">{props.subheading}</Text>}
+      </Grid>
+    </Grid>
+  )
+}
+
+export default function HeatingCoolingCostsBar(props: Props) {
+  const classes = formatClasses(['heating-cooling-bar'])
+
+  const calculateWidth = (hours?: number) => {
+    let period: number
+
+    switch (props.period) {
+      case 'day':
+      default:
+        period = 24
+        break
+      case 'week':
+        period = 168
+        break
+      case 'month':
+        period = 730
+        break
+    }
+
+    return {
+      width: `${(hours || 0 / period) * 100}%`,
+    }
+  }
+
+  return (
+    <Flex container spacing={2}>
+      <Flex item style={{ width: '100%' }}>
+        <Bar className={classes} size="lg">
+          <div
+            data-progress-key="cool"
+            data-value={
+              props?.cool?.runtime_hours ? props.cool.runtime_hours : undefined
+            }
+            style={calculateWidth(props?.cool?.runtime_hours)}
+          />
+          <div
+            data-progress-key="heat"
+            data-value={
+              props?.heat?.runtime_hours ? props.heat.runtime_hours : undefined
+            }
+            style={calculateWidth(props?.heat?.runtime_hours)}
+          />
+        </Bar>
+      </Flex>
+      <Flex item>
+        <Grid gap="16px">
+          <LegendItem
+            label="Cool"
+            subheading={`$${props?.cool?.cost_cents || 0} • ${
+              props?.cool?.runtime_hours || 0
+            } hrs`}
+          />
+          <LegendItem
+            label="Heat"
+            subheading={`$${props?.heat?.cost_cents || 0} • ${
+              props?.heat?.runtime_hours || 0
+            } hrs`}
+          />
+          <LegendItem label="Off" />
+        </Grid>
+      </Flex>
+    </Flex>
+  )
+}
