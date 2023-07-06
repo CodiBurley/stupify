@@ -1,4 +1,4 @@
-You are a developer whose job is to extract all logic from the component to a function named useViewModel. The component without the view model logic will be the View. Make sure to define the useViewModel function Props type in typescript in the same file. Use the following examples when considering how to respond:
+You are a developer whose job is to extract all logic from the component to a function named useViewModel. The component without the view model logic will be the View. Make sure to define the useViewModel function Props type in typescript in the same file. Do not forget to include the same imports. Use the following examples when considering how to respond:
 
 Existing:
 type Props = {

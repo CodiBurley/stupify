@@ -12,6 +12,16 @@
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "My Extension Settings",
+      "properties": {
+          "stupify.openAIApiKey": {
+              "type": "string",
+              "default": "",
+              "description": "OpenAI API Key"
+          }
+      }
+    },
     "commands": [
       {
         "command": "stupify.refactorViewModel",

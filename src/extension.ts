@@ -6,7 +6,7 @@ import systemPrompt from "./prompt/system.txt";
 
 function initializeOpenAI() {
   const configuration = new Configuration({
-    apiKey: process.env.OPENAI_API_KEY ?? "",
+    apiKey: vscode.workspace.getConfiguration().get("stupify.openAIApiKey")
   });
   return new OpenAIApi(configuration);
 }
@@ -22,7 +22,7 @@ async function openNewTextDocumentWithSameLanguage() {
   const document = editor.document;
   const language = document.languageId;
   const doc = await vscode.workspace.openTextDocument({ language });
-  vscode.window.showTextDocument(doc, editor.viewColumn);
+  await vscode.window.showTextDocument(doc, editor.viewColumn);
 }
 
 let lastEdit = Promise.resolve(true);
