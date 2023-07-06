@@ -3,7 +3,6 @@
 import * as vscode from "vscode";
 import { Configuration, OpenAIApi } from "openai";
 import systemPrompt from "./prompt/system.txt";
-import userPrompt from "./prompt/user.txt";
 
 function initializeOpenAI() {
   const configuration = new Configuration({
