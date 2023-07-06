@@ -14,8 +14,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "stupify.helloWorld",
-        "title": "Hello World"
+        "command": "stupify.refactorViewModel",
+        "title": "Refactor with View Models"
       }
     ]
   },
