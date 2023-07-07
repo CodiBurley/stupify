@@ -15,11 +15,17 @@
     "configuration": {
       "title": "My Extension Settings",
       "properties": {
-          "stupify.openAIApiKey": {
+            "stupify.openAIApiKey": {
               "type": "string",
               "default": "",
               "description": "OpenAI API Key"
-          }
+            },
+            "stupify.openAIVersion": {
+              "type": "string",
+              "default": "gpt-3.5-turbo",
+              "enum": ["gpt-4", "gpt-3.5-turbo", "gpt-3.5-turbo-16k"],
+              "description": "OpenAI API Version"
+            }
       }
     },
     "commands": [

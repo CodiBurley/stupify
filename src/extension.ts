@@ -4,12 +4,15 @@ import * as vscode from "vscode";
 import { Configuration, OpenAIApi } from "openai";
 import systemPrompt from "./prompt/system.txt";
 
+let newDocumentUri: vscode.Uri; // Variable to store the new document Uri
+
 function initializeOpenAI() {
   const configuration = new Configuration({
     apiKey: vscode.workspace.getConfiguration().get("stupify.openAIApiKey")
   });
   return new OpenAIApi(configuration);
 }
+
 
 async function openNewTextDocumentWithSameLanguage() {
   const editor = vscode.window.activeTextEditor;
@@ -22,9 +25,9 @@ async function openNewTextDocumentWithSameLanguage() {
   const document = editor.document;
   const language = document.languageId;
   const doc = await vscode.workspace.openTextDocument({ language });
+  newDocumentUri = doc.uri; // Store the Uri of the newly created document
   await vscode.window.showTextDocument(doc, editor.viewColumn);
 }
-
 let lastEdit = Promise.resolve(true);
 
 async function appendTextToActiveEditor(text: string) {
@@ -44,7 +47,8 @@ async function appendTextToActiveEditor(text: string) {
 }
 
 async function appendResponseStreamToNewFile(
-  response: Awaited<ReturnType<typeof OpenAIApi.prototype.createChatCompletion>>
+  response: Awaited<ReturnType<typeof OpenAIApi.prototype.createChatCompletion>>,
+  originalDocumentUri: vscode.Uri | undefined
 ) {
   await openNewTextDocumentWithSameLanguage();
   for await (const data of response.data as any) {
@@ -70,7 +74,10 @@ async function appendResponseStreamToNewFile(
       }
     }
   }
+  // Open diff view after the new document has been written
+  await vscode.commands.executeCommand('vscode.diff', originalDocumentUri, newDocumentUri, 'Diff view');
 }
+
 
 function getValidatedTextFromActiveEditor() {
   const MINIMUM_LENGTH = 120;
@@ -93,7 +100,7 @@ async function getRefactorAICompletionResponseStream(
   const openai = initializeOpenAI();
   return openai.createChatCompletion(
     {
-      model: "gpt-3.5-turbo",
+      model: vscode.workspace.getConfiguration().get("stupify.openAIVersion") ?? "gpt-3.5-turbo",
       stream: true,
       messages: [
         { role: "system", content: systemPrompt },
@@ -107,13 +114,7 @@ async function getRefactorAICompletionResponseStream(
     { responseType: "stream" }
   );
 }
-
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
-  // The command has been defined in the package.json file
-  // Now provide the implementation of the command with registerCommand
-  // The commandId parameter must match the command field in package.json
   let disposable = vscode.commands.registerCommand(
     "stupify.refactorViewModel",
     async () => {
@@ -121,9 +122,10 @@ export async function activate(context: vscode.ExtensionContext) {
       if (!currentFileContent) {
         return;
       }
+      const originalDocumentUri = vscode.window.activeTextEditor?.document.uri; // Store the Uri of the original document
       const refactorResponseStream =
         await getRefactorAICompletionResponseStream(currentFileContent);
-      await appendResponseStreamToNewFile(refactorResponseStream);
+      await appendResponseStreamToNewFile(refactorResponseStream, originalDocumentUri);
     }
   );
 
