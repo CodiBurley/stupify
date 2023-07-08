@@ -8,11 +8,10 @@ let newDocumentUri: vscode.Uri; // Variable to store the new document Uri
 
 function initializeOpenAI() {
   const configuration = new Configuration({
-    apiKey: vscode.workspace.getConfiguration().get("stupify.openAIApiKey")
+    apiKey: vscode.workspace.getConfiguration().get("stupify.openAIApiKey"),
   });
   return new OpenAIApi(configuration);
 }
-
 
 async function openNewTextDocumentWithSameLanguage() {
   const editor = vscode.window.activeTextEditor;
@@ -28,8 +27,8 @@ async function openNewTextDocumentWithSameLanguage() {
   newDocumentUri = doc.uri; // Store the Uri of the newly created document
   await vscode.window.showTextDocument(doc, editor.viewColumn);
 }
-let lastEdit = Promise.resolve(true);
 
+let lastEdit = Promise.resolve(true);
 async function appendTextToActiveEditor(text: string) {
   const editor = vscode.window.activeTextEditor;
   if (editor) {
@@ -47,7 +46,9 @@ async function appendTextToActiveEditor(text: string) {
 }
 
 async function appendResponseStreamToNewFile(
-  response: Awaited<ReturnType<typeof OpenAIApi.prototype.createChatCompletion>>,
+  response: Awaited<
+    ReturnType<typeof OpenAIApi.prototype.createChatCompletion>
+  >,
   originalDocumentUri: vscode.Uri | undefined
 ) {
   await openNewTextDocumentWithSameLanguage();
@@ -75,9 +76,17 @@ async function appendResponseStreamToNewFile(
     }
   }
   // Open diff view after the new document has been written
-  await vscode.commands.executeCommand('vscode.diff', originalDocumentUri, newDocumentUri, 'Diff view');
+  await vscode.commands.executeCommand(
+    "vscode.diff",
+    originalDocumentUri,
+    newDocumentUri,
+    "Diff view"
+  );
 }
 
+function removeExtraNewlines(content: string) {
+  return content.replace(/\n{2,}/g, "\n");
+}
 
 function getValidatedTextFromActiveEditor() {
   const MINIMUM_LENGTH = 120;
@@ -91,7 +100,7 @@ function getValidatedTextFromActiveEditor() {
     return;
   }
 
-  return currentFileContent;
+  return removeExtraNewlines(currentFileContent);
 }
 
 async function getRefactorAICompletionResponseStream(
@@ -100,7 +109,9 @@ async function getRefactorAICompletionResponseStream(
   const openai = initializeOpenAI();
   return openai.createChatCompletion(
     {
-      model: vscode.workspace.getConfiguration().get("stupify.openAIVersion") ?? "gpt-3.5-turbo",
+      model:
+        vscode.workspace.getConfiguration().get("stupify.openAIVersion") ??
+        "gpt-3.5-turbo",
       stream: true,
       messages: [
         { role: "system", content: systemPrompt },
@@ -125,7 +136,10 @@ export async function activate(context: vscode.ExtensionContext) {
       const originalDocumentUri = vscode.window.activeTextEditor?.document.uri; // Store the Uri of the original document
       const refactorResponseStream =
         await getRefactorAICompletionResponseStream(currentFileContent);
-      await appendResponseStreamToNewFile(refactorResponseStream, originalDocumentUri);
+      await appendResponseStreamToNewFile(
+        refactorResponseStream,
+        originalDocumentUri
+      );
     }
   );
 
