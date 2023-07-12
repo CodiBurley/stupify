@@ -2,7 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
 import { Configuration, OpenAIApi } from "openai";
-import systemPrompt from "./prompt/system.txt";
+import { getAllRefactors } from "./refactors";
 
 let newDocumentUri: vscode.Uri; // Variable to store the new document Uri
 
@@ -104,6 +104,7 @@ function getValidatedTextFromActiveEditor() {
 }
 
 async function getRefactorAICompletionResponseStream(
+  refactorPrompt: string,
   currentFileContent: string
 ) {
   const openai = initializeOpenAI();
@@ -114,7 +115,7 @@ async function getRefactorAICompletionResponseStream(
         "gpt-3.5-turbo",
       stream: true,
       messages: [
-        { role: "system", content: systemPrompt },
+        { role: "system", content: refactorPrompt },
         {
           role: "user",
           content: currentFileContent,
@@ -125,17 +126,35 @@ async function getRefactorAICompletionResponseStream(
     { responseType: "stream" }
   );
 }
+
 export async function activate(context: vscode.ExtensionContext) {
-  let disposable = vscode.commands.registerCommand(
-    "stupify.refactorViewModel",
+  let refactorDisposable = vscode.commands.registerCommand(
+    "stupify.refactor",
     async () => {
+      const allRefactors = getAllRefactors();
+      const refactorKey = (await vscode.window.showQuickPick(
+        Object.keys(allRefactors),
+        {
+          placeHolder: "Which refactor would you like to run?",
+        }
+      )) as keyof typeof allRefactors | undefined;
+
+      if (!refactorKey) {
+        return;
+      }
+
+      const refactorPrompt = allRefactors[refactorKey];
+
       const currentFileContent = getValidatedTextFromActiveEditor();
       if (!currentFileContent) {
         return;
       }
       const originalDocumentUri = vscode.window.activeTextEditor?.document.uri; // Store the Uri of the original document
       const refactorResponseStream =
-        await getRefactorAICompletionResponseStream(currentFileContent);
+        await getRefactorAICompletionResponseStream(
+          refactorPrompt,
+          currentFileContent
+        );
       await appendResponseStreamToNewFile(
         refactorResponseStream,
         originalDocumentUri
@@ -143,7 +162,7 @@ export async function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  context.subscriptions.push(disposable);
+  context.subscriptions.push(refactorDisposable);
 }
 
 // This method is called when your extension is deactivated

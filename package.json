@@ -30,8 +30,8 @@
     },
     "commands": [
       {
-        "command": "stupify.refactorViewModel",
-        "title": "Refactor with View Models"
+        "command": "stupify.refactor",
+        "title": "Refactor with Stupify"
       }
     ]
   },
